@@ -44,7 +44,6 @@ public class PatentLoadController extends PatentBaseController{
             return new ResponseEntity<String>("Success", HttpStatus.OK);
         } catch (PersistenceException e) {
             log.error("Error in load Patents from USPTO API Endpoint : loadPatents " );
-            e.printStackTrace();
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (DataAccessException da){
             log.error("Error load Patents from USPTO API Endpoint : loadPatents "  );

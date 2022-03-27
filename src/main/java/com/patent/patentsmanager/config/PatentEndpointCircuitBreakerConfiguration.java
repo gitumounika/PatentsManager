@@ -8,6 +8,7 @@ import java.time.Duration;
 
 import static io.github.resilience4j.circuitbreaker.CircuitBreakerConfig.SlidingWindowType.COUNT_BASED;
 
+
 @Configuration
 public class PatentEndpointCircuitBreakerConfiguration {
 

@@ -36,8 +36,7 @@ public class PatentProcessingController extends PatentBaseController {
     }
 
     @GetMapping("/v2/patent/ocr/pdftotext")
-    public @ResponseBody
-    ResponseEntity<String> ocrPdfTextExtract() {
+    public @ResponseBody ResponseEntity<String> ocrPdfTextExtract() {
         log.trace("Starting Async Pdf OCR Text extraxt : ocrPdfTextExtract");
         try {
             long ocrQueuesize = patentService.countByProcessedStatus(Status.LOCKED.getStatus());
@@ -90,8 +89,7 @@ public class PatentProcessingController extends PatentBaseController {
 
 
     @PostMapping("/v1/patent/ocr/pdftotext")
-    public @ResponseBody
-    ResponseEntity<String> ocrPdfTextExtract(@RequestParam("file") MultipartFile file) {
+    public @ResponseBody ResponseEntity<String> ocrPdfTextExtract(@RequestParam("file") MultipartFile file) {
         log.trace("Starting sync Pdf OCR Text extraxt : ocrPdfTextExtract");
         try {
             log.trace("Starting Sync Pdf OCR Text extraxt : ocrPdfTextExtract");
@@ -107,18 +105,16 @@ public class PatentProcessingController extends PatentBaseController {
                 return new ResponseEntity<String>("Success", HttpStatus.OK);
             } else {
                 log.warn(" Invalid Input file in sync Pdf OCR Text extraxt : ocrPdfTextExtract");
-                return new ResponseEntity<String>("Failed", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<String>("Invalid input file ", HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("Error in sync Pdf OCR Text extraxt : ocrPdfTextExtract");
+            log.error("Error in sync Pdf OCR Text extraxt : ocrPdfTextExtract", e.getMessage());
             return new ResponseEntity<String>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PostMapping("/v1/patent/pdftotext")
-    public @ResponseBody
-    ResponseEntity<String> pdfToText(@RequestParam("file") MultipartFile file) {
+    public @ResponseBody ResponseEntity<String> pdfToText(@RequestParam("file") MultipartFile file) {
         log.trace("Starting Pdf to Text extraxt : pdfToText ");
         try {
             if (null != file && file.getSize() != 0) {
@@ -133,7 +129,7 @@ public class PatentProcessingController extends PatentBaseController {
                 return new ResponseEntity<String>("Success", HttpStatus.OK);
             } else {
                 log.warn("Invalid input file in Pdf to Text extraxt : pdfToText ");
-                return new ResponseEntity<String>("Failed", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<String>("Invalid input file ", HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
             log.error("Error in Pdf to Text extraxt : pdfToText ");

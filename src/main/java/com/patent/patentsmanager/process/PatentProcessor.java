@@ -1,11 +1,9 @@
 package com.patent.patentsmanager.process;
 
-import com.patent.patentsmanager.model.Patent;
 import net.sourceforge.tess4j.TesseractException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 
 @Service

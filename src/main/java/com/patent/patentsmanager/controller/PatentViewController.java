@@ -27,23 +27,25 @@ public class PatentViewController extends PatentBaseController {
 
     @RequestMapping("/patents")
     public String view(Model model){
-        log.trace("Display patents : patents " );
+        log.trace("Starting Display patents : patents " );
         try {
             List<Patent> patents = patentService.findByDownloadedStatus(Status.PROCESSED.getStatus());
             model.addAttribute("patents",patents);
         } catch (PersistenceException e) {
-            log.error("Error in Display patents : patents " );
+            log.error("Error in Display patents : patents ", e.getMessage() );
             e.printStackTrace();
         } catch (DataAccessException da){
-            log.error("Error in Display patents : patents" );
+            log.error("Error in Display patents : patents", da.getMessage() );
         } catch (Exception e){
-            log.error("Error in Display patents : patents" );
+            log.error("Error in Display patents : patents", e.getMessage() );
         }
+        log.trace("Ending Display patents : patents " );
         return "patents/view";
     }
 
     @RequestMapping(path = {"/","/search"})
     public String search(Model model, String keyword)  {
+        log.trace("Starting Search patents : search " );
         try {
             List<Patent> patents;
             if (keyword != null) {
@@ -53,13 +55,13 @@ public class PatentViewController extends PatentBaseController {
             }
             model.addAttribute("patents", patents);
         }catch (PersistenceException e) {
-            log.error("Error in Display patents : patents " );
-            e.printStackTrace();
+            log.error("Error in Display patents : patents ", e.getMessage());
         } catch (DataAccessException da){
-            log.error("Error in Display patents : patents" );
+            log.error("Error in Display patents : patents", da.getMessage());
         } catch (Exception e){
-            log.error("Error in Display patents : patents" );
+            log.error("Error in Display patents : patents", e.getMessage());
         }
+        log.trace("Ending Search patents : search " );
         return "patents/view";
     }
 }

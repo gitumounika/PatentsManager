@@ -127,7 +127,6 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
      * @return
      * @throws IOException
      */
-
     public List<IIOImage> pdfToImage(PDDocument document) throws IOException, InterruptedException {
         ExecutorService pool = Executors.newFixedThreadPool(3);
         List<IIOImage> images = new ArrayList<IIOImage>();
