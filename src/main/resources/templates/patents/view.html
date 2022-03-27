@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang = "en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <link th:href="@{/patent.css}" rel="stylesheet" />
+</head>
+<body>
+<div class="container mt-5">
+    <form th:action="@{/search}" method="get">
+        <input type="text" name="keyword" th:value="${keyword}"  placeholder="Find by patent application number" size="50" >
+        <button type="submit" class="btn btn-info" >Search</button>
+        <button type="submit" class="btn btn-info" >Reset</button>
+    </form>
+    <table>
+        <thead>
+        <tr>
+            <th colspan="10">PATENTS</th>
+        </tr>
+        <tr>
+            <th>APPLICATION NUMBER</th>
+            <th>SME</th>
+            <th>FILING DATE</th>
+            <th>INVENTION TITLE</th>
+            <th>INVENTORS</th>
+            <th>ASSIGNEE ENTITY NAME</th>
+            <th>DOWNLOAD PATENT</th>
+            <th>DOWNLOAD ARCHIVE</th>
+            <th>PUBLICATION DATE</th>
+            <th>PUBLICATION DOCUMENT IDENTIFIER</th>
+        </tr>
+        <tbody>
+        <tr th:each="patent:${patents}">
+            <td th:text = "${patent.patentApplicationNumber}"></td>
+            <td th:text = "${patent.inventionSubjectMatterCategory}"></td>
+            <td th:text = "${patent.filingDate}"></td>
+            <td th:text = "${patent.inventionTitle}"></td>
+            <td th:text = "${patent.inventorNames}"></td>
+            <td th:text = "${patent.assigneeEntityName}"></td>
+            <td><a th:href="${patent.filelocationURI}" th:text="${patent.publicationDocumentIdentifier}"/></td>
+            <td><a th:href="${patent.archiveURI}" th:text="${patent.patentApplicationNumber}"/></a></td>
+            <td th:text="${patent.publicationDate}"></td>
+            <td th:text="${patent.publicationDocumentIdentifier}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
