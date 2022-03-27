@@ -1,10 +1,8 @@
 package com.patent.patentsmanager.services;
 
 import com.patent.patentsmanager.model.Patent;
-import org.springframework.dao.PermissionDeniedDataAccessException;
 import org.springframework.scheduling.annotation.Async;
 
-import javax.persistence.PersistenceException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

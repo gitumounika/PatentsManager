@@ -1,7 +1,6 @@
 package com.patent.patentsmanager.controller;
 
 import com.patent.patentsmanager.config.PatentConfiguration;
-import com.patent.patentsmanager.constants.PatentConstants;
 import com.patent.patentsmanager.enums.Status;
 import com.patent.patentsmanager.model.Patent;
 import com.patent.patentsmanager.process.PatentProcessor;
@@ -19,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
