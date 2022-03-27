@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -41,23 +42,25 @@ public class PatentProcessingController extends PatentBaseController {
         try {
             long ocrQueuesize = patentService.countByProcessedStatus(Status.LOCKED.getStatus());
             if(ocrQueuesize < 10) {
-                List<Patent> patents = patentService.findByProcessedStatus(Status.NEW.getStatus());
+                List<Patent> patents = patentService.findByProcessedStatusAndDownloadedStatus(Status.NEW.getStatus(),
+                                                                                Status.PROCESSED.getStatus()).subList(0,10);
+                //patents.add(new Patent("US13200784"));
                 ExecutorService pool = Executors.newFixedThreadPool(3);
                 if (null != patents && !patents.isEmpty()) {
                     for (Patent patent : patents) {
-                        File f = new File(patentConfiguration.fileStoreLocation + patent.getPatentApplicationNumber());
+                        String currDirectory = patent.getPatentApplicationNumber();
+                        File f = new File(patentConfiguration.fileStoreLocation + currDirectory);
                         File[] files = f.listFiles(filter);
                         patents.forEach(it -> {it.setProcessedStatus(Status.LOCKED.getStatus());});
                         patentService.savePatents(patents);
                         for (File file : files) {
-                            String currDirectory = patent.getPatentApplicationNumber();
                             PDDocument document = PDDocument.load(file);
                             String fileName = FilenameUtils.getBaseName(file.getName());
                             if (null != document) {
                                 CompletableFuture.supplyAsync(() -> {
                                     try {
                                         if (null != document) {
-                                            String processedText = patentProcessor.pdfToTextWithOCR(document, fileName);
+                                            String processedText = patentProcessor.pdfToTextWithOCR(document, fileName, currDirectory);
                                             if (null != processedText) {
                                                 patentProcessor.writeToTextFile(processedText, currDirectory, fileName);
                                             }
@@ -96,7 +99,7 @@ public class PatentProcessingController extends PatentBaseController {
             if (null != file && file.getSize() != 0) {
                 PDDocument document = PDDocument.load(file.getBytes());
                 String name = FilenameUtils.getBaseName(file.getOriginalFilename());
-                String convertedText = patentProcessor.pdfToTextWithOCR(document, name);
+                String convertedText = patentProcessor.pdfToTextWithOCR(document, name, name);
                 if (null != convertedText) {
                     patentProcessor.writeToTextFile(convertedText, patentConfiguration.fileStoreDestinationLocation,
                                             FilenameUtils.getBaseName(file.getOriginalFilename()));

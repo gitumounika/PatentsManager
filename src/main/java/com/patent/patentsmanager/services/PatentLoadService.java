@@ -159,4 +159,8 @@ public class PatentLoadService implements PatentService{
         return patentRepository.countByProcessedStatus(status);
     }
 
+    @Override
+    public List<Patent> findByProcessedStatusAndDownloadedStatus(String pStatus, String dStatus) throws Exception {
+        return patentRepository.findByProcessedStatusAndDownloadedStatus(pStatus,dStatus);
+    }
 }

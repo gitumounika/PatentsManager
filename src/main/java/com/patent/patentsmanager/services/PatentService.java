@@ -19,6 +19,7 @@ public interface PatentService {
     void savePatents(List<Patent> patents) throws Exception;
     List<Patent> findByDownloadedStatus(String status) throws Exception ;
     List<Patent> findByProcessedStatus(String status) throws Exception ;
+    List<Patent>findByProcessedStatusAndDownloadedStatus(String pStatus,String dStatus) throws Exception;
     List<Patent> getPatentsByKeyword(String keyword) throws Exception;
 
 }

@@ -105,6 +105,10 @@ public class Patent {
     @LastModifiedDate
     private Date updatedOn;
 
+    public Patent(String patentApplicationNumber){
+        this.patentApplicationNumber = patentApplicationNumber;
+    }
+
     public String getPatentApplicationNumber() {
         return patentApplicationNumber;
     }

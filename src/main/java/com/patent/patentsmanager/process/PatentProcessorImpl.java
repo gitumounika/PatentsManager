@@ -4,9 +4,7 @@ package com.patent.patentsmanager.process;
 import com.patent.patentsmanager.config.PatentConfiguration;
 import com.patent.patentsmanager.constants.PatentConstants;
 import com.patent.patentsmanager.model.Patent;
-import net.sourceforge.tess4j.ITesseract;
-import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
+import net.sourceforge.tess4j.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -24,7 +22,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +39,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
 
     private static final Logger log = LoggerFactory.getLogger(PatentProcessorImpl.class);
 
-    private static final String TESSERACTS_LANGUAGE = "ita";
+    private static final String TESSERACTS_LANGUAGE = "eng";
     private static final String EMPTY_STRING = " ";
     private final PatentConfiguration patentConfiguration;
 
@@ -56,15 +56,18 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
      * @throws TesseractException
      */
     @Override
-    public String pdfToTextWithOCR(PDDocument document, String fileName) throws IOException, TesseractException, InterruptedException {
-        log.info("Starting pdfToTextWithOCR for : " + fileName + EMPTY_STRING + Thread.currentThread().getName());
+    public String pdfToTextWithOCR(PDDocument document, String fileName, String currDirectory) throws IOException, TesseractException, InterruptedException {
+        log.info("Starting pdfToTextWithOCR for patent: " + currDirectory + EMPTY_STRING + fileName + EMPTY_STRING + Thread.currentThread().getName());
         String result = null;
         try {
-            ITesseract tesseract = new Tesseract();
+            Tesseract1 tesseract = new Tesseract1();
             tesseract.setDatapath(patentConfiguration.ocrEngineDataPath);
             tesseract.setLanguage(TESSERACTS_LANGUAGE);
+            tesseract.setVariable("user_defined_dpi","71");
+            /* PSM Auto detects vertical segmented page text more accurately than other PSM (Page Segment Mode) options.*/
+            tesseract.setPageSegMode(ITessAPI.TessPageSegMode.PSM_AUTO);
             result = tesseract.doOCR(pdfToImage(document), new Rectangle());
-            log.info("Ending pdfToTextWithOCR for : " + fileName + EMPTY_STRING + Thread.currentThread().getName());
+            log.info("Ending pdfToTextWithOCR for patent: " + currDirectory + EMPTY_STRING + fileName + EMPTY_STRING + Thread.currentThread().getName());
         } catch (IOException io) {
             throw io;
         } catch (InterruptedException e) {
@@ -105,6 +108,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
      */
     @Override
     public void writeToTextFile(String text, String currDirectory, String filename) throws IOException {
+        log.trace("Starting writeToTextFile for patent: " + currDirectory + EMPTY_STRING + filename + EMPTY_STRING + Thread.currentThread().getName());
         FileWriter textFile = null;
         try {
             if (null != text) {
@@ -119,6 +123,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
                 textFile.close();
             }
         }
+        log.trace("Ending writeToTextFile for patent: " + currDirectory + EMPTY_STRING + filename + EMPTY_STRING + Thread.currentThread().getName());
     }
 
 
@@ -128,8 +133,10 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
      * @throws IOException
      */
     public List<IIOImage> pdfToImage(PDDocument document) throws IOException, InterruptedException {
+        log.trace("Starting pdfToImage for : "  + Thread.currentThread().getName());
         ExecutorService pool = Executors.newFixedThreadPool(3);
         List<IIOImage> images = new ArrayList<IIOImage>();
+        Map<Integer,IIOImage> imageMap = new HashMap<Integer,IIOImage>();
         if (null != document) {
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             int numberOfPages = document.getNumberOfPages();
@@ -150,23 +157,26 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
                 IIOImage image = new IIOImage(bim, null, null);
                 images.add(image);
             }*/
-
             for(int page = 0; page<out.length;page++){
-                int finalPage = page;
+                int pageIndex = page;
                 pool.submit(() -> {
                     BufferedImage bim = null;
                     try {
-                        bim = pdfRenderer.renderImageWithDPI(finalPage, 300, ImageType.RGB);
+                        bim = pdfRenderer.renderImageWithDPI(pageIndex, 300, ImageType.RGB);
+                        IIOImage image = new IIOImage(bim, null, null);
+                        imageMap.put(pageIndex,image);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    IIOImage image = new IIOImage(bim, null, null);
-                    images.add(image);
-              });
+                });
             }
             pool.shutdown();
             pool.awaitTermination(5, TimeUnit.HOURS);
+            for(Integer i=0;i<numberOfPages;i++){
+                images.add(imageMap.get(i));
+            }
         }
+        log.trace("Ending pdfToImage for : "  + Thread.currentThread().getName());
         return images;
     }
 }
