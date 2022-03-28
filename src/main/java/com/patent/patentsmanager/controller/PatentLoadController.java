@@ -24,7 +24,7 @@ import java.util.Map;
 @RequestMapping("/load")
 public class PatentLoadController extends PatentBaseController{
 
-    private static Logger log = LoggerFactory.getLogger(PatentLoadController.class);
+    private final static Logger log = LoggerFactory.getLogger(PatentLoadController.class);
 
     public PatentLoadController(PatentProcessor patentProcessor, PatentConfiguration patentConfiguration, PatentService patentService, PatentRepository patentRepository) {
         super(patentProcessor, patentConfiguration,patentService, patentRepository);
@@ -41,40 +41,33 @@ public class PatentLoadController extends PatentBaseController{
             });
             patentService.savePatents(patents);
             log.trace("Ending load Patents from USPTO API Endpoint : loadPatents " );
-            return new ResponseEntity<String>("Success", HttpStatus.OK);
+            return new ResponseEntity<>("Success", HttpStatus.OK);
         } catch (PersistenceException e) {
             log.error("Error in load Patents from USPTO API Endpoint : loadPatents " );
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (DataAccessException da){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (DataAccessException | CallNotPermittedException da){
             log.error("Error load Patents from USPTO API Endpoint : loadPatents "  );
-            return new ResponseEntity<String>(da.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (CallNotPermittedException cbe) {
-            log.error("Error load Patents from USPTO API Endpoint : loadPatents "  );
-            return new ResponseEntity<String>(cbe.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(da.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e){
             log.error("Error load Patents from USPTO API Endpoint : loadPatents "  );
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/v1/patent/download")
-    public @ResponseBody ResponseEntity<String> downloadPatents(@RequestParam(required = false) Map<String, String> params){
+    public @ResponseBody ResponseEntity<String> downloadPatents(){
         log.trace("Starting Download Patents file location URI : downloadPatents " );
         try {
             List<Patent> patents = patentService.findByDownloadedStatus(Status.NEW.getStatus());
             patentService.download(patents);
             log.trace("Ending Download Patents file location URI : downloadPatents " );
-            return new ResponseEntity<String>("Success", HttpStatus.OK);
-        } catch (PersistenceException e) {
+            return new ResponseEntity<>("Success", HttpStatus.OK);
+        } catch (PersistenceException | DataAccessException e) {
             log.error("Error in Download Patents file location URI : downloadPatents " );
-            e.printStackTrace();
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (DataAccessException da){
-            log.error("Error in Download Patents file location URI : downloadPatents " );
-            return new ResponseEntity<String>(da.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e){
             log.error("Error in Download Patents file location URI : downloadPatents " );
-            return new ResponseEntity<String>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

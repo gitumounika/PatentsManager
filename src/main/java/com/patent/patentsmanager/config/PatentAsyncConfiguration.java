@@ -14,16 +14,14 @@ import java.util.concurrent.Executor;
 @Configuration
 @EnableAsync
 public class PatentAsyncConfiguration {
-
-    @Bean(name = "taskExecutor")
+    @Bean(name = "asyncTaskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setTaskDecorator(new PatentTaskDecorator());
         executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(5);
-        executor.setQueueCapacity(20);
+        executor.setMaxPoolSize(4);
         executor.setAllowCoreThreadTimeOut(true);
-        executor.setKeepAliveSeconds(300);
+        executor.setKeepAliveSeconds(10);
         executor.setThreadNamePrefix("Thread Pool-");
         executor.initialize();
         return executor;

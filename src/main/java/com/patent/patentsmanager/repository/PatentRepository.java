@@ -15,10 +15,9 @@ import java.util.List;
 @Repository
 public interface PatentRepository extends CrudRepository<Patent,String> {
 
-
     List<Patent> findByDownloadedStatus(String status);
     List<Patent> findByProcessedStatus(String status);
-    List<Patent> findByProcessedStatusAndDownloadedStatus(String pStatus, String dStatus);
+    List<Patent> findByProcessedStatusAndDownloadedStatus(String pStatus, String dStatus,Pageable pageable);
     long countByProcessedStatus(String status);
 
 
@@ -29,5 +28,6 @@ public interface PatentRepository extends CrudRepository<Patent,String> {
      */
     @Query(value = "select * from patent p where p.patent_application_number like %:keyword%", nativeQuery = true)
     List<Patent> findByKeyword(@Param("keyword") String keyword);
+
 
 }

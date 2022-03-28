@@ -13,12 +13,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -57,7 +62,7 @@ public class PatentLoadService implements PatentService{
     }
 
     @CircuitBreaker(name = "endPointUsptoCircuitBreaker",fallbackMethod = "fallBackUsptoEndpoint")
-    public List<Patent> loadPatentPublications(Map<String, String> params) throws IOException,Exception {
+    public List<Patent> loadPatentPublications(Map<String, String> params) throws Exception {
         log.trace("Starting load Patents from USPTO API Endpoint : loadPatentPublications " );
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());
@@ -71,7 +76,7 @@ public class PatentLoadService implements PatentService{
     }
 
 
-    private MultiValueMap constructQueryParams(Map<String,String> params) throws Exception {
+    private MultiValueMap constructQueryParams(Map<String,String> params)  {
         log.trace("Starting construct QueryParams for USPTO API Endpoint : constructQueryParams " );
         MultiValueMap<String, String> queryParams;
         if(null == params) {
@@ -87,7 +92,8 @@ public class PatentLoadService implements PatentService{
     }
 
     @Override
-    @Async
+    @Async("asyncTaskExecutor")
+    @Transactional
     public void download(List<Patent> patents)  {
         log.trace("Starting Async download patents to from location URL for thread : download " );
         if(null != patents && !patents.isEmpty()){
@@ -95,15 +101,13 @@ public class PatentLoadService implements PatentService{
                 try {
                     FileUtils.copyURLToFile(new URL(patent.getFilelocationURI()),
                             new File(patentConfiguration.fileStoreLocation+patent.getPatentApplicationNumber()+
-                                    PatentConstants.FILE_PATH_SEPERATOR + patent.getPublicationDocumentIdentifier()+ PatentConstants.FILE_PDF_SUFFIX),
-                            1000,
-                            1000);
+                                    PatentConstants.FILE_PATH_SEPERATOR + patent.getPublicationDocumentIdentifier()+ PatentConstants.FILE_PDF_SUFFIX), 1000, 1000);
                     patent.setDownloadedStatus(Status.PROCESSED.getStatus());
+                    patentRepository.save(patent);
                 } catch (IOException e) {
                     log.error("Error in Async download patents to from location URL for thread: download" + patent.getPatentApplicationNumber());
                 }
             });
-            patentRepository.saveAll(patents);
         }
         log.trace("Ending Async download patents to from location URL for thread: download " );
     }
@@ -129,6 +133,7 @@ public class PatentLoadService implements PatentService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Patent> findByDownloadedStatus(String status) throws  Exception  {
         log.trace("Starting findByDownloadedStatus : findByDownloadedStatus" );
         List<Patent> patents = (List<Patent>) patentRepository.findByDownloadedStatus(status);
@@ -137,6 +142,7 @@ public class PatentLoadService implements PatentService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Patent> findByProcessedStatus(String status) throws Exception {
         log.trace("Starting findByProcessedStatus : findByProcessedStatus" );
         List<Patent> patents = (List<Patent>) patentRepository.findByProcessedStatus(status);
@@ -145,6 +151,7 @@ public class PatentLoadService implements PatentService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Patent> getPatentsByKeyword(String keyword) throws  Exception {
         log.trace("Starting Querying Downloaded Patents : findByDownloadedStatus" );
         List<Patent> patents = patentRepository.findByKeyword(keyword);
@@ -153,12 +160,15 @@ public class PatentLoadService implements PatentService{
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countByProcessedStatus(String status) throws Exception {
         return patentRepository.countByProcessedStatus(status);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Patent> findByProcessedStatusAndDownloadedStatus(String pStatus, String dStatus) throws Exception {
-        return patentRepository.findByProcessedStatusAndDownloadedStatus(pStatus,dStatus);
+        Pageable pageable = PageRequest.of(0, 10);
+        return patentRepository.findByProcessedStatusAndDownloadedStatus(pStatus,dStatus,pageable);
     }
 }
