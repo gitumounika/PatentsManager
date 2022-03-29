@@ -50,7 +50,8 @@ public class PatentProcessorJob implements Job {
     public void execute(JobExecutionContext jobExecutionContext) {
         log.info("Running patentPdfOcrProcessJob execute | frequency ", REPEAT_INTERVAL);
         try {
-            long activeOcrproess = Thread.getAllStackTraces().keySet().stream().filter(t-> (t.getName().contains(PatentConstants.OCR_THREAD_POOL_NAME))).count();
+            long activeOcrproess = Thread.getAllStackTraces().keySet().stream().filter(t-> (t.getName().contains(PatentConstants.OCR_THREAD_POOL_NAME)
+                                                            && t.getState() == Thread.State.RUNNABLE)).count();
             log.info("Current Active Ocr processes Running : " + activeOcrproess);
             if(activeOcrproess == 0) {
                 List<Patent> patents = patentService.findByProcessedStatusAndDownloadedStatus(Status.NEW.getStatus(), Status.PROCESSED.getStatus());

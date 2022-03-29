@@ -41,7 +41,7 @@ public class PatentLoadController extends PatentBaseController{
             });
             patentService.savePatents(patents);
             log.trace("Ending load Patents from USPTO API Endpoint : loadPatents " );
-            return new ResponseEntity<>("Success", HttpStatus.OK);
+            return new ResponseEntity<>("Su `ccess", HttpStatus.OK);
         } catch (PersistenceException e) {
             log.error("Error in load Patents from USPTO API Endpoint : loadPatents " );
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
