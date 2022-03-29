@@ -13,4 +13,7 @@ public class PatentConstants {
     public static final String FILE_PATH_SEPERATOR = "/";
 
     public static final String COMMA_DELIMITER = ",";
+
+    public static final String OCR_THREAD_POOL_NAME = "OcrInit-Pool";
+    public static final String IMAGE_CON_THREAD_POOL_NAME = "Image-Pool";
 }

@@ -2,6 +2,7 @@ package com.patent.patentsmanager.process;
 
 
 import com.patent.patentsmanager.config.PatentConfiguration;
+import com.patent.patentsmanager.config.PatentOcrThreadExecutor;
 import com.patent.patentsmanager.constants.PatentConstants;
 import com.patent.patentsmanager.enums.Status;
 import com.patent.patentsmanager.model.Patent;
@@ -16,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.IIOImage;
 import java.awt.*;
@@ -47,14 +47,16 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
     private static final String EMPTY_STRING = " ";
     private final PatentConfiguration patentConfiguration;
     private final PatentRepository patentRepository;
+    private final PatentOcrThreadExecutor ocrThreadExecutor;
 
     private FilenameFilter filter;
 
 
     @Autowired
-    public PatentProcessorImpl(PatentConfiguration patentConfiguration, PatentRepository patentRepository) {
+    public PatentProcessorImpl(PatentConfiguration patentConfiguration, PatentRepository patentRepository, PatentOcrThreadExecutor ocrThreadExecutor) {
         this.patentConfiguration = patentConfiguration;
         this.patentRepository = patentRepository;
+        this.ocrThreadExecutor = ocrThreadExecutor;
         this.filter = filter();
     }
 
@@ -106,7 +108,9 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
         } catch (IOException io) {
             throw io;
         } finally {
-            document.close();
+            if (null != document) {
+                document.close();
+            }
         }
         log.info("Ending pdfToText for : " + fileName + EMPTY_STRING + Thread.currentThread().getName());
         return strippedText;
@@ -145,7 +149,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
      */
     public List<IIOImage> pdfToImage(PDDocument document) throws IOException, InterruptedException {
         log.trace("Starting pdfToImage for : " + Thread.currentThread().getName());
-        ExecutorService pool = Executors.newFixedThreadPool(3);
+        ExecutorService pool = ocrThreadExecutor.taskExecutor(PatentConstants.OCR_THREAD_POOL_NAME);
         List<IIOImage> images = new ArrayList<IIOImage>();
         Map<Integer, IIOImage> imageMap = new HashMap<Integer, IIOImage>();
         if (null != document) {
@@ -166,7 +170,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
                 });
             }
             pool.shutdown();
-            pool.awaitTermination(30, TimeUnit.MINUTES);
+            pool.awaitTermination(60, TimeUnit.MINUTES);
             for (Integer i = 0; i < numberOfPages; i++) {
                 images.add(imageMap.get(i));
             }
@@ -178,7 +182,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
     @Override
     public boolean ocrProcessInit(List<Patent> patents) throws Exception {
         log.trace("Starting ocrProcessInit for : " + Thread.currentThread().getName());
-        ExecutorService pool = Executors.newFixedThreadPool(3);
+        ExecutorService pool = ocrThreadExecutor.taskExecutor(PatentConstants.OCR_THREAD_POOL_NAME);
         for (Patent patent : patents) {
             String currDirectory = patent.getPatentApplicationNumber();
             File f = new File(patentConfiguration.fileStoreLocation + currDirectory);
@@ -187,7 +191,7 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
                 PDDocument document = PDDocument.load(file);
                 String fileName = FilenameUtils.getBaseName(file.getName());
                 if (null != document) {
-                    CompletableFuture.supplyAsync(() -> {
+                    pool.submit(() -> {
                         try {
                             if (null != document) {
                                 String processedText = pdfToTextWithOCR(document, fileName, currDirectory);
@@ -201,10 +205,11 @@ public class PatentProcessorImpl implements PatentProcessor<PDDocument> {
                             e.printStackTrace();
                         }
                         return null;
-                    }, pool);
+                    });
                 }
             }
         }
+        pool.shutdown();
         log.trace("Ending ocrProcessInit for : " + Thread.currentThread().getName());
         return true;
     }

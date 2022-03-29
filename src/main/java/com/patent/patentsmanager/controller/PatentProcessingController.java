@@ -1,6 +1,7 @@
 package com.patent.patentsmanager.controller;
 
 import com.patent.patentsmanager.config.PatentConfiguration;
+import com.patent.patentsmanager.constants.PatentConstants;
 import com.patent.patentsmanager.enums.Status;
 import com.patent.patentsmanager.model.Patent;
 import com.patent.patentsmanager.process.PatentProcessor;
@@ -18,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.*;
 
 @Component
 @RestController
@@ -35,14 +35,17 @@ public class PatentProcessingController extends PatentBaseController {
     public @ResponseBody ResponseEntity<String> ocrPdfTextExtract() {
         log.trace("Starting Async Pdf OCR Text extraxt : ocrPdfTextExtract");
         try {
-            long ocrQueuesize = patentService.countByProcessedStatus(Status.LOCKED.getStatus());
-            if(ocrQueuesize < 10) {
+            long activeOcrproess = Thread.getAllStackTraces().keySet().stream().filter(t -> (t.getName().contains(PatentConstants.OCR_THREAD_POOL_NAME) && t.getState() == Thread.State.RUNNABLE)).count();
+            log.info("Current Active Ocr processes Running : " + activeOcrproess);
+            if(activeOcrproess == 0) {
                 List<Patent> patents = patentService.findByProcessedStatusAndDownloadedStatus(Status.NEW.getStatus(), Status.PROCESSED.getStatus());
                 if (null != patents && !patents.isEmpty()) {
+                    patents.forEach(patent -> patent.setProcessedStatus(Status.LOCKED.getStatus()));
+                    patentService.savePatents(patents);
                     patentProcessor.ocrProcessInit(patents);
                 }
             } else {
-                return new ResponseEntity<>("More than 10 files are being processsed currently, Please try after sometime", HttpStatus.OK);
+                return new ResponseEntity<>("There are currently active running OCR processes, Please wait for some time to trigger OCR process", HttpStatus.OK);
             }
             log.trace("Ending Pdf OCR Text extraxt : ocrPdfTextExtract");
             return new ResponseEntity<>("Success", HttpStatus.OK);

@@ -14,7 +14,7 @@ public class PatentTaskDecorator implements TaskDecorator {
         Map<String, String> contextMap = MDC.getCopyOfContextMap();
         return () -> {
             try {
-                MDC.put("Test","Test");
+                MDC.put("Application","Patents Manager");
                 if(null != contextMap) {
                     MDC.setContextMap(contextMap);
                 }
