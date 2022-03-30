@@ -7,7 +7,9 @@ import com.patent.patentsmanager.constants.PatentConstants;
 import com.patent.patentsmanager.enums.Status;
 import com.patent.patentsmanager.model.Patent;
 import com.patent.patentsmanager.repository.PatentRepository;
-import net.sourceforge.tess4j.*;
+import net.sourceforge.tess4j.ITessAPI;
+import net.sourceforge.tess4j.Tesseract1;
+import net.sourceforge.tess4j.TesseractException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.ImageType;
@@ -29,9 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 

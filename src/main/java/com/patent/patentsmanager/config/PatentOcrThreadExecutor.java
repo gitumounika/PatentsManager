@@ -31,7 +31,6 @@ public class PatentOcrThreadExecutor  {
      * It is good to buffer one core for processing other processes other than the threads
      */
     public ExecutorService taskExecutor(String name) {
-//        log.info("Executor Service for Ocr processing with instance Cores: " + cores);cores
         if(cores > 4){
             corePoolSize = (cores/2) - 1;
             maxPoolSize = corePoolSize + 2;
